@@ -8,7 +8,14 @@ platform :android do
     gradle(task: "assembleDebug")
   end
 
-  desc "Build release APK"
+  desc "Run tests and build signed release APK for testers"
+  lane :testers_build do
+    gradle(task: "clean")
+    gradle(task: "test")
+    gradle(task: "assembleRelease")
+  end
+
+  desc "Build signed release artifacts"
   lane :release_build do
     gradle(task: "clean")
     gradle(task: "assembleRelease")

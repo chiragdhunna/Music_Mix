@@ -19,7 +19,7 @@ MelodyMix is the ultimate choice for music enthusiasts who seek a powerful and r
 
 ## Fastlane setup
 
-Fastlane has been added for the Android project in `Music Mix/` with:
+Fastlane has been added for the Android project with:
 
 - `Gemfile`
 - `fastlane/Fastfile`
@@ -30,24 +30,30 @@ Fastlane has been added for the Android project in `Music Mix/` with:
 
 - `bundle exec fastlane android ci`  
   Runs `clean`, `test`, and `assembleDebug`.
-- `bundle exec fastlane android release_build`  
-  Runs `clean` and `assembleRelease`.
+- `bundle exec fastlane android testers_build`  
+  Runs `clean`, `test`, and `assembleRelease`. When release signing is configured, it uses `app/keystore.properties` and `app/upload-keystore.jks`.
 
 ### GitHub Actions triggers
 
 - Manual run via `workflow_dispatch`
 - Automatic run on pushes to `main`
 
+The release/testers path uploads the signed APK artifact from `app/build/outputs/apk/release/`.
+
 ### Files/secrets needed from you
 
-Current setup does not require signing files or Play Store credentials.
+For local signed release builds, create `app/keystore.properties` from the included example file and provide the keystore binary referenced by it.
 
-If you want signed release upload/deployment later, provide:
+For signed release upload/deployment later, provide:
 
 - Android keystore file (for example `release.keystore`)
 - Keystore alias
 - Keystore/store passwords
 - Play Store service account JSON
+
+Included template:
+
+- `app/keystore.properties.example`
 
 Recommended GitHub secrets for future release automation:
 

@@ -2,6 +2,15 @@ name: Android Fastlane CI
 
 on:
   workflow_dispatch:
+    inputs:
+      lane:
+        description: Fastlane lane to run
+        required: false
+        default: testers_build
+        type: choice
+        options:
+          - ci
+          - testers_build
   push:
     branches:
       - main
@@ -12,10 +21,15 @@ jobs:
     permissions:
       contents: read
     env:
-      BUNDLE_GEMFILE: Music Mix/Gemfile
+      BUNDLE_GEMFILE: Gemfile
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      PLAY_STORE_JSON_KEY: ${{ secrets.PLAY_STORE_JSON_KEY }}
     defaults:
       run:
-        working-directory: Music Mix
+        working-directory: .
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,12 +46,37 @@ jobs:
           ruby-version: "3.2"
           bundler-cache: true
 
-      - name: Run Fastlane CI lane
-        run: bundle exec fastlane android ci
+      - name: Prepare Android signing files
+        if: github.event_name == 'workflow_dispatch' && inputs.lane == 'testers_build'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${ANDROID_KEYSTORE_BASE64}" || -z "${ANDROID_KEYSTORE_PASSWORD}" || -z "${ANDROID_KEY_ALIAS}" || -z "${ANDROID_KEY_PASSWORD}" ]]; then
+            echo "Missing one or more Android signing secrets"
+            exit 1
+          fi
 
-      - name: Upload debug APK artifact
-        if: success()
+          printf '%s' "${ANDROID_KEYSTORE_BASE64}" | base64 --decode > app/upload-keystore.jks
+          cat > app/keystore.properties <<EOF
+          storeFile=upload-keystore.jks
+          storePassword=${ANDROID_KEYSTORE_PASSWORD}
+          keyAlias=${ANDROID_KEY_ALIAS}
+          keyPassword=${ANDROID_KEY_PASSWORD}
+          EOF
+
+      - name: Run Fastlane lane
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "push" || ("${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.lane }}" == "testers_build") ]]; then
+            bundle exec fastlane android testers_build
+          else
+            bundle exec fastlane android ci
+          fi
+
+      - name: Upload release APK artifact
+        if: success() && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.lane == 'testers_build'))
         uses: actions/upload-artifact@v4
         with:
-          name: debug-apk
-          path: Music Mix/app/build/outputs/apk/debug/*.apk
+          name: release-apk
+          path: app/build/outputs/apk/release/*.apk
