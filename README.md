@@ -22,6 +22,7 @@ MelodyMix is the ultimate choice for music enthusiasts who seek a powerful and r
 Fastlane has been added for the Android project with:
 
 - `Gemfile`
+- `fastlane/Pluginfile`
 - `fastlane/Fastfile`
 - `fastlane/Appfile`
 - GitHub Actions workflow: `.github/workflows/fastlane-android.yml`
@@ -31,7 +32,7 @@ Fastlane has been added for the Android project with:
 - `bundle exec fastlane android ci`  
   Runs `clean`, `test`, and `assembleDebug`.
 - `bundle exec fastlane android testers_build`  
-  Runs `clean`, `test`, and `assembleRelease`. When release signing is configured, it uses `app/keystore.properties` and `app/upload-keystore.jks`.
+  Runs `clean`, `test`, and `assembleRelease`, then uploads the APK to Firebase App Distribution when Firebase secrets are present.
 
 ### GitHub Actions triggers
 
@@ -39,6 +40,7 @@ Fastlane has been added for the Android project with:
 - Automatic run on pushes to `main`
 
 The release/testers path uploads the signed APK artifact from `app/build/outputs/apk/release/`.
+When Firebase secrets are configured, the same path also emails testers through Firebase App Distribution.
 
 ### Files/secrets needed from you
 
@@ -62,3 +64,10 @@ Recommended GitHub secrets for future release automation:
 - `ANDROID_KEY_ALIAS`
 - `ANDROID_KEY_PASSWORD`
 - `PLAY_STORE_JSON_KEY`
+
+Firebase App Distribution secrets:
+
+- `FIREBASE_APP_ID`
+- `FIREBASE_SERVICE_ACCOUNT_JSON`
+- `FIREBASE_TESTERS`
+- `FIREBASE_GROUPS`

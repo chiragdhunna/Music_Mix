@@ -11,6 +11,18 @@ on:
         options:
           - ci
           - testers_build
+      firebase_testers:
+        description: Optional comma-separated tester emails for Firebase App Distribution
+        required: false
+        default: ""
+      firebase_groups:
+        description: Optional comma-separated Firebase tester groups
+        required: false
+        default: ""
+      firebase_release_notes:
+        description: Optional release notes shown to testers
+        required: false
+        default: "Automated tester build"
   push:
     branches:
       - main
@@ -26,7 +38,12 @@ jobs:
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-      PLAY_STORE_JSON_KEY: ${{ secrets.PLAY_STORE_JSON_KEY }}
+      FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+      FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+      FIREBASE_TESTERS: ${{ secrets.FIREBASE_TESTERS }}
+      FIREBASE_GROUPS: ${{ secrets.FIREBASE_GROUPS }}
+      GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase-service-account.json
+      FIREBASE_RELEASE_NOTES: ${{ github.event.inputs.firebase_release_notes }}
     defaults:
       run:
         working-directory: .
@@ -47,7 +64,7 @@ jobs:
           bundler-cache: true
 
       - name: Prepare Android signing files
-        if: github.event_name == 'workflow_dispatch' && inputs.lane == 'testers_build'
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.lane == 'testers_build')
         shell: bash
         run: |
           set -euo pipefail
@@ -63,6 +80,23 @@ jobs:
           keyAlias=${ANDROID_KEY_ALIAS}
           keyPassword=${ANDROID_KEY_PASSWORD}
           EOF
+
+      - name: Prepare Firebase service account
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.lane == 'testers_build')
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${FIREBASE_APP_ID}" ]]; then
+            echo "Missing FIREBASE_APP_ID secret"
+            exit 1
+          fi
+
+          if [[ -z "${FIREBASE_SERVICE_ACCOUNT_JSON}" ]]; then
+            echo "Missing FIREBASE_SERVICE_ACCOUNT_JSON secret"
+            exit 1
+          fi
+
+          printf '%s' "${FIREBASE_SERVICE_ACCOUNT_JSON}" > firebase-service-account.json
 
       - name: Run Fastlane lane
         shell: bash

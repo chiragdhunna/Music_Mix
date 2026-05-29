@@ -8,11 +8,19 @@ platform :android do
     gradle(task: "assembleDebug")
   end
 
-  desc "Run tests and build signed release APK for testers"
+  desc "Run tests, build signed release APK, and distribute to Firebase testers"
   lane :testers_build do
     gradle(task: "clean")
     gradle(task: "test")
     gradle(task: "assembleRelease")
+
+    firebase_app_distribution(
+      app: ENV["FIREBASE_APP_ID"],
+      service_credentials_file: ENV["GOOGLE_APPLICATION_CREDENTIALS"],
+      release_notes: ENV["FIREBASE_RELEASE_NOTES"] || "Automated tester build",
+      testers: ENV["FIREBASE_TESTERS"],
+      groups: ENV["FIREBASE_GROUPS"]
+    )
   end
 
   desc "Build signed release artifacts"
