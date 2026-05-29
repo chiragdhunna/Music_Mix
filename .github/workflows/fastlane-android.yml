@@ -11,14 +11,6 @@ on:
         options:
           - ci
           - testers_build
-      firebase_testers:
-        description: Optional comma-separated tester emails for Firebase App Distribution
-        required: false
-        default: ""
-      firebase_groups:
-        description: Optional comma-separated Firebase tester groups
-        required: false
-        default: ""
       firebase_release_notes:
         description: Optional release notes shown to testers
         required: false
@@ -40,8 +32,6 @@ jobs:
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
       FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
       FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
-      FIREBASE_TESTERS: ${{ secrets.FIREBASE_TESTERS }}
-      FIREBASE_GROUPS: ${{ secrets.FIREBASE_GROUPS }}
       GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase-service-account.json
       FIREBASE_RELEASE_NOTES: ${{ github.event.inputs.firebase_release_notes }}
     defaults:
@@ -110,7 +100,7 @@ jobs:
             "${ANDROID_KEY_PASSWORD}" \
             > app/keystore.properties
               
-              echo "✓ Keystore properties configured"
+          echo "✓ Keystore properties configured"
 
       - name: Prepare Firebase service account
         if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.lane == 'testers_build')
@@ -129,6 +119,70 @@ jobs:
 
           printf '%s' "${FIREBASE_SERVICE_ACCOUNT_JSON}" > firebase-service-account.json
 
+      - name: Fetch testers from Firebase
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.lane == 'testers_build')
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "📋 Fetching testers from Firebase project..."
+
+          # Extract project ID from service account
+          PROJECT_ID=$(jq -r '.project_id' firebase-service-account.json)
+          echo "Project ID: $PROJECT_ID"
+
+          # Get access token from service account
+          PRIVATE_KEY=$(jq -r '.private_key' firebase-service-account.json)
+          CLIENT_EMAIL=$(jq -r '.client_email' firebase-service-account.json)
+
+          # Create JWT token
+          HEADER='{"alg":"RS256","typ":"JWT"}'
+          NOW=$(date +%s)
+          EXPIRY=$((NOW + 3600))
+          PAYLOAD="{\"iss\":\"$CLIENT_EMAIL\",\"scope\":\"https://www.googleapis.com/auth/cloud-platform\",\"aud\":\"https://oauth2.googleapis.com/token\",\"exp\":$EXPIRY,\"iat\":$NOW}"
+
+          HEADER_ENCODED=$(echo -n "$HEADER" | base64 -w0 | tr '+/' '-_' | tr -d '=')
+          PAYLOAD_ENCODED=$(echo -n "$PAYLOAD" | base64 -w0 | tr '+/' '-_' | tr -d '=')
+
+          MESSAGE="$HEADER_ENCODED.$PAYLOAD_ENCODED"
+          SIGNATURE=$(echo -n "$MESSAGE" | openssl dgst -sha256 -sign <(echo "$PRIVATE_KEY") | base64 -w0 | tr '+/' '-_' | tr -d '=')
+          JWT="$MESSAGE.$SIGNATURE"
+
+          # Exchange JWT for access token
+          TOKEN_RESPONSE=$(curl -s -X POST "https://oauth2.googleapis.com/token" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=$JWT")
+
+          ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.access_token')
+
+          if [[ -z "$ACCESS_TOKEN" ]] || [[ "$ACCESS_TOKEN" == "null" ]]; then
+            echo "❌ Failed to get access token"
+            echo "Response: $TOKEN_RESPONSE"
+            exit 1
+          fi
+
+          echo "✓ Got access token"
+
+          # Fetch testers from Firebase App Distribution API
+          TESTERS_RESPONSE=$(curl -s -X GET \
+            "https://firebaseappdistribution.googleapis.com/v1/projects/$PROJECT_ID/testers" \
+            -H "Authorization: Bearer $ACCESS_TOKEN")
+
+          echo "Firebase API Response: $TESTERS_RESPONSE"
+
+          # Extract tester emails
+          TESTER_EMAILS=$(echo "$TESTERS_RESPONSE" | jq -r '.testers[].email' 2>/dev/null || echo "")
+
+          if [[ -z "$TESTER_EMAILS" ]]; then
+            echo "⚠️  No testers found in Firebase project"
+            echo "FIREBASE_TESTERS=" >> $GITHUB_ENV
+          else
+            # Convert newline-separated emails to comma-separated
+            TESTERS_CSV=$(echo "$TESTER_EMAILS" | tr '\n' ',' | sed 's/,$//')
+            echo "✓ Found testers: $TESTERS_CSV"
+            echo "FIREBASE_TESTERS=$TESTERS_CSV" >> $GITHUB_ENV
+          fi
+
       - name: Debug keystore setup
         shell: bash
         run: |
@@ -137,10 +191,10 @@ jobs:
           ls -lh app/upload-keystore.jks || echo "Keystore file not found!"
 
           echo "Checking keystore.properties..."
-          cat app/keystore.properties
+          cat app/keystore.properties || echo "No keystore.properties"
 
           echo "File size:"
-          wc -c < app/upload-keystore.jks
+          wc -c < app/upload-keystore.jks || echo "Could not read keystore"
 
       - name: Run Fastlane lane
         shell: bash
