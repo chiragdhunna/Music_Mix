@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      BUNDLE_GEMFILE: Music Mix/Gemfile
     defaults:
       run:
         working-directory: Music Mix
@@ -26,9 +28,9 @@ jobs:
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
-
-      - name: Install dependencies
-        run: bundle install
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
 
       - name: Run Fastlane CI lane
         run: bundle exec fastlane android ci
