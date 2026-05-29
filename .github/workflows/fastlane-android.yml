@@ -104,12 +104,11 @@ jobs:
           echo "✓ Keystore file created ($(wc -c < app/upload-keystore.jks) bytes)"
 
           # Create properties file
-          cat > app/keystore.properties <<'EOF'
-          storeFile=upload-keystore.jks
-          storePassword=${ANDROID_KEYSTORE_PASSWORD}
-          keyAlias=${ANDROID_KEY_ALIAS}
-          keyPassword=${ANDROID_KEY_PASSWORD}
-          EOF
+          printf 'storeFile=upload-keystore.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
+            "${ANDROID_KEYSTORE_PASSWORD}" \
+            "${ANDROID_KEY_ALIAS}" \
+            "${ANDROID_KEY_PASSWORD}" \
+            > app/keystore.properties
               
               echo "✓ Keystore properties configured"
 
