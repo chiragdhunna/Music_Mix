@@ -9,6 +9,8 @@ on:
 jobs:
   fastlane:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: Music Mix
@@ -24,8 +26,6 @@ jobs:
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
 
       - name: Install dependencies
         run: bundle install

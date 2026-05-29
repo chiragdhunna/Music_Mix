@@ -19,7 +19,7 @@ MelodyMix is the ultimate choice for music enthusiasts who seek a powerful and r
 
 ## Fastlane setup
 
-Fastlane has been added for the Android project in `/tmp/workspace/chiragdhunna/Music_Mix/Music Mix` with:
+Fastlane has been added for the Android project in `Music Mix/` with:
 
 - `Gemfile`
 - `fastlane/Fastfile`
