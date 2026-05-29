@@ -105,6 +105,7 @@ jobs:
 
           # Create properties file
           cat > app/keystore.properties <<'EOF'
+          storeFile=upload-keystore.jks
           storePassword=${ANDROID_KEYSTORE_PASSWORD}
           keyAlias=${ANDROID_KEY_ALIAS}
           keyPassword=${ANDROID_KEY_PASSWORD}
