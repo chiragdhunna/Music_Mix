@@ -71,3 +71,5 @@ Firebase App Distribution secrets:
 - `FIREBASE_SERVICE_ACCOUNT_JSON`
 - `FIREBASE_TESTERS`
 - `FIREBASE_GROUPS`
+
+The service account behind `FIREBASE_SERVICE_ACCOUNT_JSON` must have Firebase App Distribution access on the target Firebase project; otherwise the upload step will fail with a permissions error.
