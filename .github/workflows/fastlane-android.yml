@@ -1,0 +1,41 @@
+name: Android Fastlane CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  fastlane:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Music Mix
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Install dependencies
+        run: bundle install
+
+      - name: Run Fastlane CI lane
+        run: bundle exec fastlane android ci
+
+      - name: Upload debug APK artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk
+          path: Music Mix/app/build/outputs/apk/debug/*.apk
