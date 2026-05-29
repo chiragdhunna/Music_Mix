@@ -16,3 +16,49 @@ Key Features:
 🎵 Performance Optimization: Built for efficiency, MelodyMix ensures optimal app performance, responsiveness, and low resource consumption, providing a smooth user experience.
 
 MelodyMix is the ultimate choice for music enthusiasts who seek a powerful and reliable music player for their Android devices. Whether you want to relax with soothing melodies or get energized with lively beats, MelodyMix has got you covered. Experience the joy of music with MelodyMix today! 🎶🎧
+
+## Fastlane setup
+
+Fastlane has been added for the Android project with:
+
+- `Gemfile`
+- `fastlane/Fastfile`
+- `fastlane/Appfile`
+- GitHub Actions workflow: `.github/workflows/fastlane-android.yml`
+
+### Available lanes
+
+- `bundle exec fastlane android ci`  
+  Runs `clean`, `test`, and `assembleDebug`.
+- `bundle exec fastlane android testers_build`  
+  Runs `clean`, `test`, and `assembleRelease`. When release signing is configured, it uses `app/keystore.properties` and `app/upload-keystore.jks`.
+
+### GitHub Actions triggers
+
+- Manual run via `workflow_dispatch`
+- Automatic run on pushes to `main`
+
+The release/testers path uploads the signed APK artifact from `app/build/outputs/apk/release/`.
+
+### Files/secrets needed from you
+
+For local signed release builds, create `app/keystore.properties` from the included example file and provide the keystore binary referenced by it.
+
+For signed release upload/deployment later, provide:
+
+- Android keystore file (for example `release.keystore`)
+- Keystore alias
+- Keystore/store passwords
+- Play Store service account JSON
+
+Included template:
+
+- `app/keystore.properties.example`
+
+Recommended GitHub secrets for future release automation:
+
+- `ANDROID_KEYSTORE_BASE64`
+- `ANDROID_KEYSTORE_PASSWORD`
+- `ANDROID_KEY_ALIAS`
+- `ANDROID_KEY_PASSWORD`
+- `PLAY_STORE_JSON_KEY`

@@ -1,0 +1,23 @@
+default_platform(:android)
+
+platform :android do
+  desc "Run tests and build debug APK for CI"
+  lane :ci do
+    gradle(task: "clean")
+    gradle(task: "test")
+    gradle(task: "assembleDebug")
+  end
+
+  desc "Run tests and build signed release APK for testers"
+  lane :testers_build do
+    gradle(task: "clean")
+    gradle(task: "test")
+    gradle(task: "assembleRelease")
+  end
+
+  desc "Build signed release artifacts"
+  lane :release_build do
+    gradle(task: "clean")
+    gradle(task: "assembleRelease")
+  end
+end
