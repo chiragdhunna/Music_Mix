@@ -32,7 +32,7 @@ Fastlane has been added for the Android project with:
 - `bundle exec fastlane android ci`  
   Runs `clean`, `test`, and `assembleDebug`.
 - `bundle exec fastlane android testers_build`  
-  Runs `clean`, `test`, and `assembleRelease`, then uploads the APK to Firebase App Distribution when Firebase secrets are present.
+  Runs `clean`, `test`, and `assembleRelease`, then uploads the release APK to Firebase App Distribution for the Firebase App Distribution group configured in the workflow.
 
 ### GitHub Actions triggers
 
@@ -40,7 +40,7 @@ Fastlane has been added for the Android project with:
 - Automatic run on pushes to `main`
 
 The release/testers path uploads the signed APK artifact from `app/build/outputs/apk/release/`.
-When Firebase secrets are configured, the same path also emails testers through Firebase App Distribution.
+When Firebase App Distribution is configured, the same path also distributes the release to the Firebase group that contains your testers.
 
 ### Files/secrets needed from you
 
@@ -69,7 +69,7 @@ Firebase App Distribution secrets:
 
 - `FIREBASE_APP_ID`
 - `FIREBASE_SERVICE_ACCOUNT_JSON`
-- `FIREBASE_TESTERS`
 - `FIREBASE_GROUPS`
 
 The service account behind `FIREBASE_SERVICE_ACCOUNT_JSON` must have Firebase App Distribution access on the target Firebase project; otherwise the upload step will fail with a permissions error.
+The workflow defaults `FIREBASE_GROUPS` to `all-testers`, so create that group in Firebase App Distribution or override it with a repository variable named `FIREBASE_GROUPS`.
