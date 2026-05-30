@@ -181,7 +181,7 @@ jobs:
 
           echo "Firebase API Response: $TESTERS_RESPONSE"
 
-          TESTER_EMAILS=$(echo "$TESTERS_RESPONSE" | jq -r '.testers[].email' 2>/dev/null || echo "")
+          TESTER_EMAILS=$(echo "$TESTERS_RESPONSE" | jq -r '.testers[].name | split("/")[-1]' 2>/dev/null || echo "")
 
           if [[ -z "$TESTER_EMAILS" ]]; then
             echo "⚠️  No testers found in Firebase project"
