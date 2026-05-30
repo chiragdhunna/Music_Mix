@@ -19,7 +19,7 @@ platform :android do
         app: ENV["FIREBASE_APP_ID"],
         service_credentials_file: ENV["GOOGLE_APPLICATION_CREDENTIALS"],
         release_notes: ENV["FIREBASE_RELEASE_NOTES"] || "Automated tester build",
-        groups: ENV["FIREBASE_GROUPS"] || "all-testers"
+        groups: ENV["FIREBASE_GROUPS"]
       )
     rescue StandardError => error
       UI.user_error!("Firebase App Distribution upload failed. Verify that the service account JSON in GOOGLE_APPLICATION_CREDENTIALS belongs to a service account that has Firebase App Distribution access on the target Firebase project, and confirm FIREBASE_APP_ID points to the same project. Original error: #{error.message}")

@@ -72,4 +72,4 @@ Firebase App Distribution secrets:
 - `FIREBASE_GROUPS`
 
 The service account behind `FIREBASE_SERVICE_ACCOUNT_JSON` must have Firebase App Distribution access on the target Firebase project; otherwise the upload step will fail with a permissions error.
-The workflow defaults `FIREBASE_GROUPS` to `all-testers`, so create that group in Firebase App Distribution or override it with a repository variable named `FIREBASE_GROUPS`.
+Set the repository variable `FIREBASE_GROUPS` to the Firebase App Distribution group name that contains your testers.

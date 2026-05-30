@@ -32,7 +32,7 @@ jobs:
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
       FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
       FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
-      FIREBASE_GROUPS: ${{ vars.FIREBASE_GROUPS || 'all-testers' }}
+      FIREBASE_GROUPS: ${{ vars.FIREBASE_GROUPS }}
       GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase-service-account.json
       FIREBASE_RELEASE_NOTES: ${{ github.event.inputs.firebase_release_notes }}
     defaults:
@@ -119,6 +119,17 @@ jobs:
           fi
 
           printf '%s' "${FIREBASE_SERVICE_ACCOUNT_JSON}" > firebase-service-account.json
+
+      - name: Validate Firebase App Distribution target
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.lane == 'testers_build')
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${FIREBASE_GROUPS}" ]]; then
+            echo "ERROR: Set repository variable FIREBASE_GROUPS to the Firebase App Distribution group that contains your testers."
+            exit 1
+          fi
 
       - name: Debug keystore setup
         shell: bash
