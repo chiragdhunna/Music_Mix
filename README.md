@@ -39,7 +39,7 @@ Fastlane has been added for the Android project with:
 - Manual run via `workflow_dispatch`
 - Automatic run on pushes to `main`
 
-The release/testers path uploads the signed APK artifact from `app/build/outputs/apk/release/`.
+The release/testers path uploads the signed APK artifact from `app/build/outputs/apk/release/` and also publishes the APK to the `android-latest` GitHub Release asset.
 When Firebase App Distribution is configured, the same path also distributes the release to all testers registered in Firebase App Distribution.
 
 ### Files/secrets needed from you

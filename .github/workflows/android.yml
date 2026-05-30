@@ -23,7 +23,7 @@ jobs:
   fastlane:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     env:
       BUNDLE_GEMFILE: Gemfile
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -221,3 +221,15 @@ jobs:
         with:
           name: release-apk
           path: app/build/outputs/apk/release/app-release.apk
+
+      - name: Publish release APK to GitHub Release
+        if: success() && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.lane == 'testers_build'))
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-latest
+          name: Android Latest APK
+          target_commitish: ${{ github.sha }}
+          prerelease: true
+          generate_release_notes: false
+          files: |
+            app/build/outputs/apk/release/app-release.apk
