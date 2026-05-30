@@ -159,8 +159,24 @@ jobs:
 
           echo "✓ Got access token"
 
+          PROJECT_RESPONSE=$(curl -s -X GET \
+            "https://firebase.googleapis.com/v1beta1/projects/$PROJECT_ID" \
+            -H "Authorization: Bearer $ACCESS_TOKEN")
+
+          echo "Firebase project response: $PROJECT_RESPONSE"
+
+          PROJECT_NUMBER=$(echo "$PROJECT_RESPONSE" | jq -r '.projectNumber')
+
+          if [[ -z "$PROJECT_NUMBER" ]] || [[ "$PROJECT_NUMBER" == "null" ]]; then
+            echo "❌ Failed to resolve Firebase project number"
+            echo "Response: $PROJECT_RESPONSE"
+            exit 1
+          fi
+
+          echo "Project number: $PROJECT_NUMBER"
+
           TESTERS_RESPONSE=$(curl -s -X GET \
-            "https://firebaseappdistribution.googleapis.com/v1/projects/$PROJECT_ID/testers" \
+            "https://firebaseappdistribution.googleapis.com/v1/projects/$PROJECT_NUMBER/testers?pageSize=1000" \
             -H "Authorization: Bearer $ACCESS_TOKEN")
 
           echo "Firebase API Response: $TESTERS_RESPONSE"
